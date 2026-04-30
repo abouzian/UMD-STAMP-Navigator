@@ -1,6 +1,6 @@
-#UMD STAMP Navigator
-#INST326 Final Project
-#Group Members: Adam Bouziane, Yudhir Vasam, Tinsae Adem
+# UMD STAMP Navigator
+# INST326 Final Project
+# Group Members: Adam Bouziane, Yudhir Vasam, Tinsae Adem
 
 def main():
     print("--- UMD STAMP Navigator (Starting Point: Main Entrance) ---")
@@ -11,14 +11,19 @@ def main():
     print("3. TerpZone (Bowling, Billiards, & Games)")
     print("4. Maryland Campus Store (Apparel & Tech)")
     print("5. Coffee Shop (The Coffee Bar)")
+    print("0. Exit Program")
 
-    choice = input("\nEnter your destination number (1-5): ")
+    choice = input("\nEnter your destination number (0-5): ")
+
+    if choice == "0":
+        print("Your Existing STAMP, Goodbye!!!")
 
     print("-" * 40)
 
     if choice == '1':
         print("Destination: FOOD COURT")
-        print("1. Enter through the Main Doors and walk straight past the Information Desk.")
+        print(
+            "1. Enter through the Main Doors and walk straight past the Information Desk.")
         print("2. Locate the central 'Grand Staircase' or the elevators behind the desk.")
         print("3. Go DOWN one level to the Ground Floor.")
         print("4. The Food Court will be directly in front of you as you exit the stairs.")
@@ -38,7 +43,8 @@ def main():
 
     elif choice == '4':
         print("Destination: MARYLAND CAMPUS STORE")
-        print("1. Enter through the Main Doors and walk straight past the Information Desk.")
+        print(
+            "1. Enter through the Main Doors and walk straight past the Information Desk.")
         print("2. Continue walking toward the back-left corner of the main level (near the Union Lane entrance).")
         print("3. The Campus Store is located right next to the stairs leading down to the bowling alley.")
 
@@ -48,11 +54,9 @@ def main():
         print("2. Walk toward the Stamp Gallery and the lounge seating.")
         print("3. The Coffee Bar is tucked into the corner near the windows overlooking the mall.")
 
-    else:
-        print("Error: Destination not recognized. Please choose 1, 2, 3, 4, or 5.")
-
     print("-" * 40)
     print("Stay safe and Go Terps!")
+
 
 if __name__ == "__main__":
     main()
