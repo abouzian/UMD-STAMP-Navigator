@@ -24,7 +24,7 @@ ENTRANCES = {
 }
 
 DIRECTIONS = {
-    # --- From Main Entrance (First Floor) ---
+    #  From Main Entrance (First Floor) 
     ("1", "1"): [
         "Enter through the Main Entrance — you are now on the First Floor (1F).",
         "Walk straight past the Info Desk toward the center of the building.",
@@ -57,7 +57,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space directly north of the Grand Ballroom Lounge.",
     ],
 
-    # --- From South Entrance (First Floor) ---
+    #  From South Entrance (First Floor) 
     ("2", "1"): [
         "Enter through the South Entrance — you are on the First Floor (1F), east side.",
         "Walk left (west) toward the center of the building and the Info Desk.",
@@ -88,7 +88,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space on the north side of this floor.",
     ],
 
-    # --- From South West Entrance (Ground Floor) ---
+    #  From South West Entrance (Ground Floor) 
     ("3", "1"): [
         "Enter through the South West Entrance — you are on the Ground Floor (G), west side.",
         "Walk straight east (right) along the main corridor past the Graduate Student Lounge.",
@@ -119,7 +119,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space on the north side of the First Floor.",
     ],
 
-    # --- From East Entrance (Ground Floor) ---
+    #  From East Entrance (Ground Floor) 
     ("4", "1"): [
         "Enter through the East Entrance — you are on the Ground Floor (G), east side near the East Patio.",
         "Walk straight west (left) into the building.",
@@ -151,7 +151,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space on the north side of the First Floor.",
     ],
 
-    # --- From North East Entrance (Basement) ---
+    #  From North East Entrance (Basement) 
     ("5", "1"): [
         "Enter through the North East Entrance — you are in the Basement (B), east side.",
         "Walk west through the corridor past the Catering Kitchen.",
@@ -186,9 +186,7 @@ DIRECTIONS = {
 }
 
 
-# ---------------------------------------------------------------------------
 # Favorite route persistence helpers
-# ---------------------------------------------------------------------------
 
 def load_favorite():
     """Load the saved favorite route from disk. Returns a dict or None."""
@@ -422,14 +420,14 @@ def handle_favorite_at_startup():
 def main():
     display_welcome()
 
-    # --- Favorite route check ---
+    #  Favorite route check 
     fav_entrance, fav_destinations = handle_favorite_at_startup()
 
     if fav_entrance:
         run_favorite_route(fav_entrance, fav_destinations)
         return
 
-    # --- Normal flow ---
+    #  Normal flow 
     display_entrance_menu()
     entrance = get_entrance_choice()
 
