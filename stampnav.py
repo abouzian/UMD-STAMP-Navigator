@@ -231,9 +231,7 @@ def display_favorite(favorite):
         print(f"    {i}. {DESTINATIONS[dest]}")
 
 
-# ---------------------------------------------------------------------------
 # Navigator class
-# ---------------------------------------------------------------------------
 
 class STAMPNavigator:
 
@@ -266,9 +264,7 @@ class STAMPNavigator:
         return f"You navigated to {self.visit_count} {noun} this session. Stay safe and Go Terps!"
 
 
-# ---------------------------------------------------------------------------
 # Display helpers
-# ---------------------------------------------------------------------------
 
 def display_welcome():
     print("=" * 40)
@@ -312,9 +308,7 @@ def display_route_summary(entrance, visited):
         print(f"   Stop {i}: {DESTINATIONS[dest]}")
 
 
-# ---------------------------------------------------------------------------
 # Core navigation loop (shared by normal flow and post-favorite continuation)
-# ---------------------------------------------------------------------------
 
 def run_navigation_loop(navigator, original_entrance):
     """
@@ -356,9 +350,7 @@ def run_navigation_loop(navigator, original_entrance):
     return visited
 
 
-# ---------------------------------------------------------------------------
 # Favorite route playback
-# ---------------------------------------------------------------------------
 
 def run_favorite_route(entrance, destinations):
     """Walk the user through each stop in their saved favorite route."""
@@ -389,9 +381,7 @@ def run_favorite_route(entrance, destinations):
         print("\n" + navigator.session_summary())
 
 
-# ---------------------------------------------------------------------------
 # Startup favorite-route prompt
-# ---------------------------------------------------------------------------
 
 def handle_favorite_at_startup():
     """
@@ -427,9 +417,7 @@ def handle_favorite_at_startup():
     return None, None
 
 
-# ---------------------------------------------------------------------------
 # Main
-# ---------------------------------------------------------------------------
 
 def main():
     display_welcome()
