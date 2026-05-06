@@ -8,9 +8,7 @@ import stampnav
 from stampnav import STAMPNavigator
 
 
-# ---------------------------------------------------------------------------
 # run run_navigation_loop with input/output
-# ---------------------------------------------------------------------------
 
 def _run_loop(inputs, entrance="1"):
     """Run the navigation loop with the given input sequence and return (output, navigator)."""
@@ -21,9 +19,7 @@ def _run_loop(inputs, entrance="1"):
             return fake_out.getvalue(), nav
 
 
-# ===========================================================================
 # TestGetDirections
-# ===========================================================================
 
 class TestGetDirections(unittest.TestCase):
 
@@ -111,9 +107,7 @@ class TestGetDirections(unittest.TestCase):
                 )
 
 
-# ===========================================================================
 # TestFormatDirections
-# ===========================================================================
 
 class TestFormatDirections(unittest.TestCase):
 
@@ -157,9 +151,7 @@ class TestFormatDirections(unittest.TestCase):
         self.assertIn("PANERA", nav.format_directions("5"))
 
 
-# ===========================================================================
 # TestUpdateEntrance
-# ===========================================================================
 
 class TestUpdateEntrance(unittest.TestCase):
 
@@ -188,9 +180,7 @@ class TestUpdateEntrance(unittest.TestCase):
         self.assertEqual(nav.entrance, "5")
 
 
-# ===========================================================================
 # TestSessionSummary
-# ===========================================================================
 
 class TestSessionSummary(unittest.TestCase):
 
@@ -216,9 +206,7 @@ class TestSessionSummary(unittest.TestCase):
         self.assertIn("Go Terps", nav.session_summary())
 
 
-# ===========================================================================
 # TestRunNavigationLoop — signature + multi-stop + save prompt
-# ===========================================================================
 
 class TestRunNavigationLoop(unittest.TestCase):
 
@@ -319,9 +307,7 @@ class TestRunNavigationLoop(unittest.TestCase):
         self.assertIn("west", output.lower())
 
 
-# ===========================================================================
 # TestFavoritePersistence - save/load/delete
-# ===========================================================================
 
 class TestFavoritePersistence(unittest.TestCase):
 
@@ -382,9 +368,7 @@ class TestFavoritePersistence(unittest.TestCase):
         self.assertIn("destinations", data)
 
 
-# ===========================================================================
 # TestInputHelpers
-# ===========================================================================
 
 class TestInputHelpers(unittest.TestCase):
 
