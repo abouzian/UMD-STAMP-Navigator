@@ -23,8 +23,18 @@ ENTRANCES = {
     "5": "North East Entrance - Basement (next to Nyumburu Cultural Center)",
 }
 
+# maps each destination to the closest entrance on the same floor
+# so chained directions start from the right place
+DESTINATION_TO_ENTRANCE = {
+    "1": "4",   # Food Court is on Ground Floor, nearest to East Entrance
+    "2": "3",   # Book Center is on Ground Floor, nearest to SW Entrance
+    "3": "5",   # TerpZone is in Basement, nearest to NE Entrance
+    "4": "2",   # Coffee Bar is on First Floor, nearest to South Entrance
+    "5": "1",   # Panera is on First Floor, nearest to Main Entrance
+}
+
 DIRECTIONS = {
-    #  From Main Entrance (First Floor) 
+    # --- From Main Entrance (First Floor) ---
     ("1", "1"): [
         "Enter through the Main Entrance — you are now on the First Floor (1F).",
         "Walk straight past the Info Desk toward the center of the building.",
@@ -57,7 +67,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space directly north of the Grand Ballroom Lounge.",
     ],
 
-    #  From South Entrance (First Floor) 
+    # --- From South Entrance (First Floor) ---
     ("2", "1"): [
         "Enter through the South Entrance — you are on the First Floor (1F), east side.",
         "Walk left (west) toward the center of the building and the Info Desk.",
@@ -88,7 +98,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space on the north side of this floor.",
     ],
 
-    #  From South West Entrance (Ground Floor) 
+    # --- From South West Entrance (Ground Floor) ---
     ("3", "1"): [
         "Enter through the South West Entrance — you are on the Ground Floor (G), west side.",
         "Walk straight east (right) along the main corridor past the Graduate Student Lounge.",
@@ -119,7 +129,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space on the north side of the First Floor.",
     ],
 
-    #  From East Entrance (Ground Floor) 
+    # --- From East Entrance (Ground Floor) ---
     ("4", "1"): [
         "Enter through the East Entrance — you are on the Ground Floor (G), east side near the East Patio.",
         "Walk straight west (left) into the building.",
@@ -151,7 +161,7 @@ DIRECTIONS = {
         "Panera Bread is the yellow-marked space on the north side of the First Floor.",
     ],
 
-    #  From North East Entrance (Basement) 
+    # --- From North East Entrance (Basement) ---
     ("5", "1"): [
         "Enter through the North East Entrance — you are in the Basement (B), east side.",
         "Walk west through the corridor past the Catering Kitchen.",
@@ -186,10 +196,10 @@ DIRECTIONS = {
 }
 
 
-# Favorite route persistence helpers
+# functions for saving/loading/deleting the favorite route file
 
 def load_favorite():
-    """Load the saved favorite route from disk. Returns a dict or None."""
+    """reads the saved favorite route from the json file, returns None if there isn't one"""
     if os.path.exists(FAVORITES_FILE):
         try:
             with open(FAVORITES_FILE, "r") as f:
@@ -200,10 +210,7 @@ def load_favorite():
 
 
 def save_favorite(entrance, destinations):
-    """
-    Persist a favorite multi-stop route to disk.
-    destinations is an ordered list of destination keys.
-    """
+    """saves the entrance and list of destination keys to the json file"""
     data = {"entrance": entrance, "destinations": destinations}
     with open(FAVORITES_FILE, "w") as f:
         json.dump(data, f)
@@ -211,7 +218,7 @@ def save_favorite(entrance, destinations):
 
 
 def delete_favorite():
-    """Remove the saved favorite route file."""
+    """deletes the saved favorite route file if it exists"""
     if os.path.exists(FAVORITES_FILE):
         os.remove(FAVORITES_FILE)
         print("\nFavorite route cleared.")
@@ -220,7 +227,7 @@ def delete_favorite():
 
 
 def display_favorite(favorite):
-    """Pretty-print the stored favorite route."""
+    """prints out the saved favorite route so the user can see it"""
     entrance_name = ENTRANCES[favorite["entrance"]]
     stops = favorite["destinations"]
     print(f"\n  Entrance : {entrance_name}")
@@ -229,7 +236,7 @@ def display_favorite(favorite):
         print(f"    {i}. {DESTINATIONS[dest]}")
 
 
-# Navigator class
+# navigator class that keeps track of where the user is and formats directions
 
 class STAMPNavigator:
 
@@ -241,7 +248,7 @@ class STAMPNavigator:
         return DIRECTIONS.get((self.entrance, destination), [])
 
     def format_directions(self, destination):
-        """Return formatted direction text from the current position to destination."""
+        """builds and returns the step-by-step directions as a string"""
         if destination not in DESTINATIONS:
             return "Error: Destination not recognized. Please enter a number 1-5."
 
@@ -254,7 +261,7 @@ class STAMPNavigator:
         return "\n".join(lines)
 
     def update_entrance(self, new_entrance):
-        """After arriving at a destination, treat it as the new starting point."""
+        """updates the current position so the next set of directions starts from the right place"""
         self.entrance = new_entrance
 
     def session_summary(self):
@@ -262,7 +269,7 @@ class STAMPNavigator:
         return f"You navigated to {self.visit_count} {noun} this session. Stay safe and Go Terps!"
 
 
-# Display helpers
+# helper functions for printing menus and directions to the screen
 
 def display_welcome():
     print("=" * 40)
@@ -299,21 +306,18 @@ def display_directions(directions_text):
 
 
 def display_route_summary(entrance, visited):
-    """Print a summary of the full multi-stop route just completed."""
+    """prints a summary of all the stops the user visited this session"""
     print("\nRoute completed:")
     print(f"   Start : {ENTRANCES[entrance]}")
     for i, dest in enumerate(visited, start=1):
         print(f"   Stop {i}: {DESTINATIONS[dest]}")
 
 
-# Core navigation loop (shared by normal flow and post-favorite continuation)
+# main loop that handles navigating to one or more destinations
 
 def run_navigation_loop(navigator, original_entrance):
-    """
-    Navigate stop by stop. After the user says 'no' to another destination,
-    show the route summary and offer to save it as a favorite.
-    Returns the list of destination keys visited this loop.
-    """
+    """keeps asking the user where they want to go until they say stop,
+    then shows a summary and offers to save the route"""
     visited = []
 
     while True:
@@ -331,12 +335,11 @@ def run_navigation_loop(navigator, original_entrance):
         display_directions(directions_text)
         visited.append(choice)
 
-        # Each destination becomes the new starting point for the next leg
-        navigator.update_entrance(choice)
+        # update position to the closest entrance for where the user just arrived
+        navigator.update_entrance(DESTINATION_TO_ENTRANCE[choice])
 
         again = input("\nNavigate to another location? (y/n): ").strip().lower()
         if again != "y":
-            # Show summary and offer to save
             if visited:
                 display_route_summary(original_entrance, visited)
                 save = input("\nWould you like to save this as your favorite route? (y/n): ").strip().lower()
@@ -348,10 +351,10 @@ def run_navigation_loop(navigator, original_entrance):
     return visited
 
 
-# Favorite route playback
+# plays back the user's saved favorite route stop by stop
 
 def run_favorite_route(entrance, destinations):
-    """Walk the user through each stop in their saved favorite route."""
+    """walks the user through each stop in their saved favorite route"""
     print(f"\nStarting from: {ENTRANCES[entrance]}")
     navigator = STAMPNavigator(entrance)
 
@@ -361,7 +364,8 @@ def run_favorite_route(entrance, destinations):
         print(f"  {stop_label}")
         directions_text = navigator.format_directions(dest)
         display_directions(directions_text)
-        navigator.update_entrance(dest)
+        # update position so the next stop's directions start from where we just arrived
+        navigator.update_entrance(DESTINATION_TO_ENTRANCE[dest])
 
         if i < len(destinations) - 1:
             cont = input("\nReady for the next stop? (y/n): ").strip().lower()
@@ -373,20 +377,17 @@ def run_favorite_route(entrance, destinations):
 
     again = input("\nNavigate to another location? (y/n): ").strip().lower()
     if again == "y":
-        # Use the last destination as the new starting entrance
         run_navigation_loop(navigator, destinations[-1])
     else:
         print("\n" + navigator.session_summary())
 
 
-# Startup favorite-route prompt
+# checks for a saved favorite at startup and asks the user what to do with it
 
 def handle_favorite_at_startup():
-    """
-    Check for a saved favorite route at launch.
-    Returns (entrance, destinations_list) if the user wants to use it,
-    or (None, None) to fall through to normal navigation.
-    """
+    """checks if there's a saved favorite route when the program starts,
+    returns the entrance and destinations if the user wants to use it,
+    otherwise returns (None, None) to continue with normal navigation"""
     favorite = load_favorite()
     if not favorite:
         return None, None
@@ -415,19 +416,19 @@ def handle_favorite_at_startup():
     return None, None
 
 
-# Main
+# entry point
 
 def main():
     display_welcome()
 
-    #  Favorite route check 
+    # check for a saved favorite first
     fav_entrance, fav_destinations = handle_favorite_at_startup()
 
     if fav_entrance:
         run_favorite_route(fav_entrance, fav_destinations)
         return
 
-    #  Normal flow 
+    # normal flow if no favorite was selected
     display_entrance_menu()
     entrance = get_entrance_choice()
 

@@ -8,10 +8,10 @@ import stampnav
 from stampnav import STAMPNavigator
 
 
-# run run_navigation_loop with input/output
+# helper to run the navigation loop with fake inputs and capture output
 
 def _run_loop(inputs, entrance="1"):
-    """Run the navigation loop with the given input sequence and return (output, navigator)."""
+    """runs the navigation loop with a fake list of inputs, returns the output and navigator"""
     nav = STAMPNavigator(entrance)
     with patch("builtins.input", side_effect=iter(inputs)):
         with patch("sys.stdout", new=StringIO()) as fake_out:
@@ -161,10 +161,10 @@ class TestUpdateEntrance(unittest.TestCase):
         self.assertEqual(nav.entrance, "3")
 
     def test_update_affects_next_directions(self):
-        """After arriving at TerpZone (key 3), next directions should start from there."""
+        # after updating to entrance 3, directions should reflect that new position
         nav = STAMPNavigator("1")
         nav.update_entrance("3")
-        # From dest-3, going to Food Court
+        # now asking for Food Court directions from entrance 3 (SW entrance, Ground Floor)
         steps = nav.get_directions("1")
         self.assertTrue(any("Ground Floor" in s or "east" in s.lower() for s in steps))
 
@@ -206,7 +206,7 @@ class TestSessionSummary(unittest.TestCase):
         self.assertIn("Go Terps", nav.session_summary())
 
 
-# TestRunNavigationLoop — signature + multi-stop + save prompt
+# tests for run_navigation_loop
 
 class TestRunNavigationLoop(unittest.TestCase):
 
@@ -248,7 +248,7 @@ class TestRunNavigationLoop(unittest.TestCase):
         self.assertEqual(nav.visit_count, 1)
 
     def test_route_summary_shown_after_session(self):
-        """Multi-stop route summary should appear when user says no to another destination."""
+        # route summary should show up when the user is done navigating
         output, _ = _run_loop(["1", "y", "3", "n", "n"])
         self.assertIn("Route completed", output)
 
@@ -258,7 +258,7 @@ class TestRunNavigationLoop(unittest.TestCase):
         self.assertIn("Stop 2", output)
 
     def test_save_favorite_on_yes(self):
-        """Saying 'y' to the save prompt should persist the route."""
+        # saying yes to save should write the route to the file
         if os.path.exists(stampnav.FAVORITES_FILE):
             os.remove(stampnav.FAVORITES_FILE)
         _run_loop(["1", "n", "y"])  # dest=1, no more, save=yes
@@ -268,14 +268,14 @@ class TestRunNavigationLoop(unittest.TestCase):
         os.remove(stampnav.FAVORITES_FILE)
 
     def test_no_save_on_no(self):
-        """Saying 'n' to the save prompt should leave no favorite file."""
+        # saying no to save should not create a file
         if os.path.exists(stampnav.FAVORITES_FILE):
             os.remove(stampnav.FAVORITES_FILE)
         _run_loop(["1", "n", "n"])  # dest=1, no more, save=no
         self.assertIsNone(stampnav.load_favorite())
 
     def test_multi_stop_save_contains_all_destinations(self):
-        """A multi-stop save should capture every destination in order."""
+        # saving a multi-stop route should include all destinations in order
         if os.path.exists(stampnav.FAVORITES_FILE):
             os.remove(stampnav.FAVORITES_FILE)
         _run_loop(["4", "y", "2", "n", "y"])  # Coffee Bar > Book Center
@@ -285,12 +285,12 @@ class TestRunNavigationLoop(unittest.TestCase):
         os.remove(stampnav.FAVORITES_FILE)
 
     def test_entrance_updates_between_stops(self):
-        """After visiting dest=1, the navigator's entrance should be '1' for the next leg."""
+        # after visiting Food Court (dest 1), entrance should update to East Entrance (4)
         nav = STAMPNavigator("3")
         with patch("builtins.input", side_effect=iter(["1", "n", "n"])):
             with patch("sys.stdout", new=StringIO()):
                 stampnav.run_navigation_loop(nav, "3")
-        self.assertEqual(nav.entrance, "1")
+        self.assertEqual(nav.entrance, "4")
 
     def test_south_entrance_coffee_bar_immediate(self):
         output, nav = _run_loop(["4", "n", "n"], entrance="2")
@@ -306,18 +306,30 @@ class TestRunNavigationLoop(unittest.TestCase):
         output, _ = _run_loop(["1", "n", "n"], entrance="4")
         self.assertIn("west", output.lower())
 
+    def test_chained_directions_use_last_destination_as_start(self):
+        # after going to Food Court, the next directions shouldn't start from Main Entrance
+        nav = STAMPNavigator("1")
+        with patch("builtins.input", side_effect=iter(["1", "y", "3", "n", "n"])):
+            with patch("sys.stdout", new=StringIO()) as fake_out:
+                stampnav.run_navigation_loop(nav, "1")
+                output = fake_out.getvalue()
+        legs = output.split("=" * 40)
+        if len(legs) >= 4:
+            second_leg = legs[3]
+            self.assertNotIn("Main Entrance", second_leg)
 
-# TestFavoritePersistence - save/load/delete
+
+# tests for save_favorite, load_favorite, and delete_favorite
 
 class TestFavoritePersistence(unittest.TestCase):
 
     def setUp(self):
-        """Ensure no leftover favorite file before each test."""
+        # make sure there's no leftover file before each test
         if os.path.exists(stampnav.FAVORITES_FILE):
             os.remove(stampnav.FAVORITES_FILE)
 
     def tearDown(self):
-        """Clean up after each test."""
+        # clean up the file after each test
         if os.path.exists(stampnav.FAVORITES_FILE):
             os.remove(stampnav.FAVORITES_FILE)
 
@@ -353,7 +365,7 @@ class TestFavoritePersistence(unittest.TestCase):
         self.assertIsNone(stampnav.load_favorite())
 
     def test_overwrite_favorite(self):
-        """Saving a second time should replace the first favorite."""
+        # saving again should replace the old favorite, not add to it
         stampnav.save_favorite("1", ["1"])
         stampnav.save_favorite("3", ["4", "5"])
         fav = stampnav.load_favorite()
@@ -366,6 +378,51 @@ class TestFavoritePersistence(unittest.TestCase):
             data = json.load(f)
         self.assertIn("entrance", data)
         self.assertIn("destinations", data)
+
+
+# tests for the DESTINATION_TO_ENTRANCE mapping we added
+
+class TestDestinationToEntranceMapping(unittest.TestCase):
+    """checks that every destination maps to a valid entrance on the right floor"""
+
+    def test_all_destinations_have_mapping(self):
+        for dest in stampnav.DESTINATIONS:
+            self.assertIn(
+                dest, stampnav.DESTINATION_TO_ENTRANCE,
+                msg=f"Destination '{dest}' missing from DESTINATION_TO_ENTRANCE"
+            )
+
+    def test_all_mapped_entrances_are_valid(self):
+        for dest, entrance in stampnav.DESTINATION_TO_ENTRANCE.items():
+            self.assertIn(
+                entrance, stampnav.ENTRANCES,
+                msg=f"Destination '{dest}' maps to invalid entrance '{entrance}'"
+            )
+
+    def test_food_court_maps_to_ground_floor_entrance(self):
+        # Food Court is on Ground Floor so it should map to a Ground Floor entrance
+        entrance = stampnav.DESTINATION_TO_ENTRANCE["1"]
+        self.assertIn("Ground Floor", stampnav.ENTRANCES[entrance])
+
+    def test_terpzone_maps_to_basement_entrance(self):
+        # TerpZone is in the Basement so it should map to a Basement entrance
+        entrance = stampnav.DESTINATION_TO_ENTRANCE["3"]
+        self.assertIn("Basement", stampnav.ENTRANCES[entrance])
+
+    def test_coffee_bar_maps_to_first_floor_entrance(self):
+        # Coffee Bar is on First Floor so it should map to a First Floor entrance
+        entrance = stampnav.DESTINATION_TO_ENTRANCE["4"]
+        self.assertIn("First Floor", stampnav.ENTRANCES[entrance])
+
+    def test_panera_maps_to_first_floor_entrance(self):
+        # Panera is on First Floor so it should map to a First Floor entrance
+        entrance = stampnav.DESTINATION_TO_ENTRANCE["5"]
+        self.assertIn("First Floor", stampnav.ENTRANCES[entrance])
+
+    def test_book_center_maps_to_ground_floor_entrance(self):
+        # Book Center is on Ground Floor so it should map to a Ground Floor entrance
+        entrance = stampnav.DESTINATION_TO_ENTRANCE["2"]
+        self.assertIn("Ground Floor", stampnav.ENTRANCES[entrance])
 
 
 # TestInputHelpers
